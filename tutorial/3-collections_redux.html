@@ -1,0 +1,99 @@
+<html>
+  <head>
+    <script src="../lib/jquery/dist/jquery.js"></script>
+    <script src="../lib/underscore/underscore.js"></script>
+    <script src="../lib/backbone/backbone.js"></script>
+  </head>
+  <body>
+    <script>
+
+      var Comment = Backbone.Model.extend({
+        initialize: function(message, votes) {
+          this.set('message', message)
+          if (votes) {
+            this.set('votes', votes);
+          } else {
+            this.set('votes', 0);
+          }  
+        },
+        votes: function(value) {
+          if(arguments.length) {
+            this.set('votes', value);
+          } else {
+            return this.get('votes');
+          }
+        }
+      });
+
+      var CommentView = Backbone.View.extend({
+        initialize: function() {
+          this.model.on('change:votes', this.render, this);
+        },
+        render: function() {
+          var html = [
+            '<div>',
+              '<span>',
+                this.model.votes(),
+              '</span>',
+              '<span>',
+                this.model.get('message'),
+              '</span>',
+            '</div>'
+          ];
+
+          //sets html of $el node, returns node
+          return this.$el.html(html);
+        }
+      });
+
+      var Comments = Backbone.Collection.extend({
+        model: Comment
+      });
+
+      var CommentsView = Backbone.View.extend({
+        initialize: function() {
+          this.collection.on('change:votes', this.render, this);
+        },
+        render: function() {
+          var html = [
+            '<ul>',
+            '</ul>',
+            '<div>',
+              '<span>',
+                _.reduce(this.collection, function(acc, comment) {
+                  acc += comment.votes();
+                }),
+              '</span>',
+            '</div>'
+          ];
+
+          this.$el.html(html);
+          
+          this.$el.find('ul').append(_.map(this.collection, function(comment) {
+            var commentView = new CommentView({model: comment});
+            var newNode = $('<li></li>');
+            newNode.append(commentView.render());
+            return newNode;          
+          }))
+
+          return this.$el;
+        }
+      });
+
+      // ---- main ----
+      var commentsList = [
+        new Comment("Max Cudich", 2000),
+        new Comment("Gloria Ma", 2001),
+        new Comment("Alan Fu", 25),
+        new Comment("tsk tsk tsk", -500),
+        new Comment("frederick douglass", 421)
+      ];
+
+      var comments = new Comments(commentsList);
+
+      var commentsView = new CommentsView({collection: comments});
+
+      $('body').append(commentsView.render());
+    </script>
+  </body>
+</html>
